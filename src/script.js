@@ -2,6 +2,16 @@ import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as dat from 'lil-gui';
+import fragmentShader from './shaders/fragment.glsl';
+import vertexShader from './shaders/vertex.glsl';
+
+/**
+ * Sizes
+ */
+const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight,
+};
 
 // Debug
 const gui = new dat.GUI();
@@ -16,23 +26,38 @@ const canvas = document.querySelector('canvas.webgl');
 // Scene
 const scene = new THREE.Scene();
 
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+const axesHelper = new THREE.AxesHelper();
+scene.add(axesHelper);
+
+const geometry = new THREE.PlaneGeometry(4, 2);
+const material = new THREE.ShaderMaterial({
+  uniforms: {
+    uMouse: {
+      value: new THREE.Vector2(0),
+    },
+    viewport: {
+      value: new THREE.Vector2(sizes.width, sizes.height),
+    },
+  },
+  fragmentShader,
+  vertexShader,
+});
 const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
-/**
- * Sizes
- */
-const sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight,
+const mousePosition = {
+  x: 0,
+  y: 0,
 };
 
 window.addEventListener('resize', () => {
   // Update sizes
   sizes.width = window.innerWidth;
   sizes.height = window.innerHeight;
+  material.uniforms.viewport.value = new THREE.Vector2(
+    sizes.width,
+    sizes.height
+  );
 
   // Update camera
   camera.aspect = sizes.width / sizes.height;
@@ -41,6 +66,15 @@ window.addEventListener('resize', () => {
   // Update renderer
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
+
+window.addEventListener('mousemove', (e) => {
+  mousePosition.x = e.clientX;
+  mousePosition.y = e.clientY;
+  material.uniforms.uMouse.value = new THREE.Vector2(
+    mousePosition.x,
+    mousePosition.y
+  );
 });
 
 /**
@@ -53,8 +87,8 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   100
 );
-camera.position.x = 3;
-camera.position.y = 3;
+camera.position.x = 0;
+camera.position.y = 0;
 camera.position.z = 3;
 scene.add(camera);
 
